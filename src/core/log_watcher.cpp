@@ -65,7 +65,7 @@ void LogWatcher::check() {
     QTextCodec* codec = QTextCodec::codecForName(encoding_.toUtf8());
     QString logText = codec ? codec->toUnicode(rawData) : QString::fromUtf8(rawData);
 
-    QStringList lines = logText.split(QRegularExpression("[\r\n]+"), Qt::SkipEmptyParts);
+    QStringList lines = logText.split("\n", Qt::SkipEmptyParts);
     for (const QString& line : lines) {
         if (auto parsed = parser_->parseLine(line.trimmed())) {
             emit newLogLine(*parsed);
