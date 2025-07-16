@@ -35,7 +35,6 @@ void SlotTabController::handleNewLogLine(const GambleLog& log)
         logLines_.removeFirst();
     }
     
-    // スクロールが最下部か確認
     QScrollBar* scrollBar = logTextEdit_->verticalScrollBar();
     scrollBar->setValue(scrollBar->maximum());
     
