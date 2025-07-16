@@ -1,5 +1,6 @@
 #include <QLocale>
 #include <QMap>
+#include <QHeaderView>
 
 #include "infowidget.h"
 #include "ui_infowidget.h"

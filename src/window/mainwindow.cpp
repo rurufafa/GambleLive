@@ -2,6 +2,10 @@
 #include <QFile>
 #include <QMessageBox>
 #include <QStandardPaths>
+#include <QStandardItem>
+#include <QStandardItemModel>
+#include <QHBoxLayout>
+#include <QDesktopServices>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -31,19 +35,30 @@ MainWindow::MainWindow(QWidget *parent)
         ConfigManager::instance().save();
     }
 
+    
     // スロットタブ
     infoSlot_ = new InfoWidget(this);
-    ui->slotTabLayout->addWidget(infoSlot_);
-
+    ui->mainLayout->addWidget(infoSlot_);
     // 履歴タブ
     infoHistory_ = new InfoWidget(this);
     ui->historyLayout->addWidget(infoHistory_);
-
+    
+    // スロットリストを読み込み
+    QString slotListPath = QCoreApplication::applicationDirPath() + "/slotList.txt";
+    auto categories = loadSlotList(slotListPath);
+    populateSlotComboBox(ui->slotComboBox, categories);
+    
+    // 初期選択を "None" に
+    int noneIndex = ui->slotComboBox->findText("None");
+    if (noneIndex != -1)
+    ui->slotComboBox->setCurrentIndex(noneIndex);
+    
     ui->pathEdit->setText(ConfigManager::instance().get("FilePath").toString());
     ui->chatPrefixEdit->setText(ConfigManager::instance().get("ChatPrefix").toString());
-    ui->slotNameEdit->setText("None");
     ui->logDirEdit->setText(ConfigManager::instance().get("LogDirectory").toString());
     ui->saveLogCheckBox->setChecked(ConfigManager::instance().get("EnableLogSave").toBool());
+
+    ui->pauseButton->setText("一時停止");
 }
 
 MainWindow::~MainWindow()
@@ -56,7 +71,7 @@ void MainWindow::on_startButton_clicked() {
 
     QString path = ui->pathEdit->text();
     QString chatPrefix = ui->chatPrefixEdit->text();
-    QString slotName = ui->slotNameEdit->text().trimmed();
+    QString slotName = ui->slotComboBox->currentText().trimmed();
     QString logDir = ui->logDirEdit->text().trimmed();
     bool enableSave = ui->saveLogCheckBox->isChecked();
 
@@ -117,7 +132,33 @@ void MainWindow::on_startButton_clicked() {
     watcher_->start();
 }
 
+void MainWindow::on_pauseButton_clicked() {
+    if (!watcher_) return;
+
+    if (!isPaused_) {
+        watcher_->pause();
+        ui->pauseButton->setText("再開");
+    } else {
+        watcher_->resume();
+        ui->pauseButton->setText("一時停止");
+    }
+    isPaused_ = !isPaused_;
+}
+
 void MainWindow::on_stopButton_clicked() {
+    // 確認ダイアログ
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this,
+        "確認",
+        "本当に終了しますか？",
+        QMessageBox::Yes | QMessageBox::No
+    );
+
+    if (reply != QMessageBox::Yes)
+        return; 
+
+    bool saved = false;
+
     if (ConfigManager::instance().get("EnableLogSave").toBool()
         && controller_ && controller_->hasLogs())  // ログがある場合のみ
     {
@@ -130,6 +171,7 @@ void MainWindow::on_stopButton_clicked() {
         if (infoFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QTextStream out(&infoFile);
             out << controller_->toPlainText(); 
+            saved = true;
         }
     }
 
@@ -144,6 +186,38 @@ void MainWindow::on_stopButton_clicked() {
     }
 
     ui->stackedWidget->setCurrentIndex(0); // 設定画面へ
+
+    // 成功メッセージ
+    if (saved) {
+        QMessageBox::information(this, "情報", "統計情報は正常に記録されました。");
+    }
+
+}
+
+void MainWindow::on_swapButton_clicked() {
+    QWidget *widget1 = infoSlot_;
+    QWidget *widget2 = ui->logWidget;
+
+    QHBoxLayout *layout = qobject_cast<QHBoxLayout*>(ui->mainLayout); 
+    if (!layout) return;
+
+    // 現在の順序を取得
+    int index1 = layout->indexOf(widget1);
+    int index2 = layout->indexOf(widget2);
+
+    if (index1 == -1 || index2 == -1) return;
+
+    layout->removeWidget(widget1);
+    layout->removeWidget(widget2);
+
+    // 順番を逆に挿入
+    if (index1 < index2) {
+        layout->insertWidget(index1, widget2);
+        layout->insertWidget(index2, widget1);
+    } else {
+        layout->insertWidget(index2, widget1);
+        layout->insertWidget(index1, widget2);
+    }
 }
 
 void MainWindow::on_dirSelectButton_clicked() {
@@ -173,6 +247,12 @@ void MainWindow::on_fileSelectButton_clicked() {
         ui->pathEdit->setText(fileName);
     }
 }
+
+void MainWindow::on_editSlotListButton_clicked() {
+    QString path = QCoreApplication::applicationDirPath() + "/SlotList.txt";
+    QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+}
+
 
 void MainWindow::on_historyLoadButton_clicked() {
     QString slotName = ui->historySlotEdit->text().trimmed();
@@ -225,4 +305,48 @@ int MainWindow::extractNumber(const QString& line) {
         return m.captured(1).toInt();
     }
     return 0;
+}
+
+QList<SlotCategory> MainWindow::loadSlotList(const QString& path) {
+    QList<SlotCategory> result;
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return result;
+
+    QTextStream in(&file);
+    SlotCategory current{"その他", {}};
+
+    while (!in.atEnd()) {
+        QString line = in.readLine().trimmed();
+        if (line.isEmpty()) continue;
+
+        if (line.startsWith("[") && line.endsWith("]")) {
+            if (!current.items.isEmpty()) 
+                result.append(current);
+            current.label = line.mid(1, line.length() - 2);
+            current.items.clear();
+        } else {
+            current.items << line;
+        }
+    }
+    if (!current.items.isEmpty()) 
+        result.append(current);
+    return result;
+}
+
+void MainWindow::populateSlotComboBox(QComboBox* comboBox, const QList<SlotCategory>& categories) {
+    auto* model = new QStandardItemModel(comboBox);
+
+    for (const SlotCategory& category : categories) {
+        QStandardItem* headerItem = new QStandardItem("— " + category.label + " —");
+        headerItem->setFlags(Qt::NoItemFlags);  // 非選択
+        headerItem->setForeground(Qt::gray);
+        model->appendRow(headerItem);
+
+        for (const QString& item : category.items) {
+            QStandardItem* slotItem = new QStandardItem(item);
+            model->appendRow(slotItem);
+        }
+    }
+
+    comboBox->setModel(model);
 }

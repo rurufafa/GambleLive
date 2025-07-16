@@ -16,7 +16,7 @@ ConfigManager::ConfigManager()
         {"SlotName", "None"},
         {"LogDirectory", ""},
         {"EnableLogSave", true},
-        {"Encoding", "cp932"},
+        {"Encoding", "Shift-JIS"},
         {"LogUpdateInterval", 100},
     };
     load();  // 起動時にロード

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>640</width>
+    <width>722</width>
     <height>480</height>
    </rect>
   </property>
@@ -56,7 +56,14 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="slotNameEdit"/>
+               <widget class="QComboBox" name="slotComboBox"/>
+              </item>
+              <item>
+               <widget class="QPushButton" name="editSlotListButton">
+                <property name="text">
+                 <string>スロット一覧を編集する</string>
+                </property>
+               </widget>
               </item>
              </layout>
             </item>
@@ -93,6 +100,16 @@
              </layout>
             </item>
             <item>
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;記録先フォルダには以下のファイル名で関連ログが保存されます。&lt;/p&gt;&lt;p&gt;スロットログ：(スロット名)_log_(日時).log&lt;/p&gt;&lt;p&gt;スロット統計情報 (結果)：(スロット名)_info_(日時).txt&lt;/p&gt;&lt;p&gt;また、統計タブでは記録先フォルダから該当スロット名の統計情報ファイルを取得して集計結果を算出しています。&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;(注意) 統計情報ファイルは「終了」ボタンを押して正常に終了しないと記録されません！&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="textFormat">
+               <enum>Qt::TextFormat::MarkdownText</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <item>
                <widget class="QLabel" name="label">
@@ -123,30 +140,44 @@
            </layout>
           </widget>
           <widget class="QWidget" name="mainWidget">
-           <layout class="QHBoxLayout" name="horizontalLayout">
+           <layout class="QHBoxLayout" name="mainLayout">
             <item>
-             <layout class="QVBoxLayout" name="verticalLayout_3">
-              <item>
-               <widget class="QWidget" name="logWidget" native="true">
-                <layout class="QVBoxLayout" name="verticalLayout_2">
+             <widget class="QWidget" name="logWidget" native="true">
+              <layout class="QVBoxLayout" name="verticalLayout_2">
+               <item>
+                <widget class="QTextEdit" name="textLogView">
+                 <property name="readOnly">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout">
                  <item>
-                  <widget class="QTextEdit" name="textLogView">
-                   <property name="readOnly">
-                    <bool>true</bool>
+                  <widget class="QPushButton" name="swapButton">
+                   <property name="text">
+                    <string>左右入れ替え</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pauseButton">
+                   <property name="text">
+                    <string>停止</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="stopButton">
+                   <property name="text">
+                    <string>終了</string>
                    </property>
                   </widget>
                  </item>
                 </layout>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="stopButton">
-                <property name="text">
-                 <string>終了</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
+               </item>
+              </layout>
+             </widget>
             </item>
            </layout>
           </widget>

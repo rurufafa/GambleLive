@@ -23,7 +23,7 @@ SlotTabController::SlotTabController(LogWatcher* watcher,
 
 void SlotTabController::handleNewLogLine(const GambleLog& log)
 {
-    // logWidget: 表示用テキスト構築
+    // 表示用テキスト構築
     QString text;
     if (!log.time.isEmpty())
         text += log.time + " ";
@@ -72,9 +72,6 @@ void SlotTabController::handleNewLogLine(const GambleLog& log)
         break;
     case GambleLogType::Gain:
         totalGained_ += log.amount;
-        break;
-    case GambleLogType::Lose:
-        spinCount_++;
         break;
     case GambleLogType::Role:
         roleCount_[log.roleName]++;

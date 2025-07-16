@@ -16,6 +16,9 @@ public:
     ~LogWatcher();
     void start();
 
+    void pause();
+    void resume();
+
 signals:
     void newLogLine(const GambleLog& log);
 
@@ -24,11 +27,13 @@ private slots:
 
 private:
     void reopen(const QString& path);
+    bool isPaused() const;
 
     QFile file_;
     QTimer* timer_;
     qint64 pos_ = 0;
     qint64 size_ = 0;
+    bool paused_ = false;
 
     int updateInterval_;
     QString filePath_;

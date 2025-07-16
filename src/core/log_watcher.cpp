@@ -42,6 +42,8 @@ void LogWatcher::reopen(const QString& path) {
 }
 
 void LogWatcher::check() {
+    if (paused_) return; 
+
     if (!file_.isOpen()) {
         reopen(filePath_);
         pos_ = size_;
@@ -71,4 +73,27 @@ void LogWatcher::check() {
             emit newLogLine(*parsed);
         }
     }
+}
+
+void LogWatcher::pause() {
+    paused_ = true;
+}
+
+void LogWatcher::resume() {
+    if (!file_.isOpen()) {
+        reopen(filePath_);
+    }
+
+    // 現在の末尾まで読み飛ばす
+    if (file_.isOpen()) {
+        file_.seek(file_.size());
+        pos_ = file_.pos();
+        size_ = file_.size();
+    }
+
+    paused_ = false;
+}
+
+bool LogWatcher::isPaused() const {
+    return paused_;
 }
