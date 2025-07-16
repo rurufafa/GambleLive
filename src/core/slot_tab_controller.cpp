@@ -37,14 +37,9 @@ void SlotTabController::handleNewLogLine(const GambleLog& log)
     
     // スクロールが最下部か確認
     QScrollBar* scrollBar = logTextEdit_->verticalScrollBar();
-    bool atBottom = (scrollBar->value() == scrollBar->maximum());
+    scrollBar->setValue(scrollBar->maximum());
     
     logTextEdit_->setPlainText(logLines_.join("\n"));
-    
-    // もともと最下部にいた場合のみ、自動で下にスクロール
-    if (atBottom) {
-        scrollBar->setValue(scrollBar->maximum());
-    }
 
     // ログ保存（初回のみ open）
     if (enableSave_ && logFile_) {
