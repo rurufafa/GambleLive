@@ -36,7 +36,8 @@ void SlotTabController::handleNewLogLine(const GambleLog& log)
     }
     
     logTextEdit_->setPlainText(logLines_.join("\n"));
-    logTextEdit_->moveCursor(QTextCursor::End);
+    QScrollBar* scrollBar = logTextEdit_->verticalScrollBar();
+    scrollBar->setValue(scrollBar->maximum());
 
     // ログ保存（初回のみ open）
     if (enableSave_ && logFile_) {
